@@ -85,8 +85,9 @@ public class TemplateEngine {
 
     /**
      * Adds a stylesheet from it's given {@code filename} using the {@link ResourceManager}'s currently set external {@code Path} i.e. {@code directoryName} and {@code filename}.
+     * <p>Stylesheet must be located in {@code resources/styles} </p>
      * <p>This is done by fetching the stylesheet with the given {@code filename} 
-     * and adding a {@code <link>} to the html that the {@code Path} is represents </p>
+     * and adding a {@code <link>} to the html that the {@code Path} is represents. 
      * <p> This can be used whether or not the engine is running. {@code TemplateEngine.setRunning()} sets whether
      * or not the template runs</p>
      * @param filename , The name of the stylesheet that's being added
@@ -94,7 +95,7 @@ public class TemplateEngine {
      */
     public static boolean addStylesheet(String filename){
 
-        Path output = Paths.get(ResourceManager.getTempFileUri());
+        Path output = Paths.get(ResourceManager.getRenderedPageUri());
         if(output == null){
             System.out.println("Error adding stylesheet. Could not locate external html file");
             return false;
@@ -123,6 +124,7 @@ public class TemplateEngine {
 
     /**
      * Adds a stylesheet to a given {@code Path}.
+     * <p>Stylesheet must be located in {@code resources/styles}</p>
      * <p>This is done by fetching the stylesheet with the given {@code filename} 
      * and adding a {@code <link>} to the html that the {@code Path} is represents </p>
      * <p> This can be used whether or not the engine is running. {@code TemplateEngine.setRunning()} sets whether

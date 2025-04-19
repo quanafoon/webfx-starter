@@ -93,14 +93,13 @@ public class ResourceManager {
 
 
    /**
-     * Retrieves the URI of the set filename and directory. Creates it if it doesn't exist.
+     * Returns the URI of the HTML file where rendered pages are written. Creates it if it doesn't exist.
      * <p>The file and its directory are saved to the user's home directory</p>
-     * <p>This is the function that is used to retrieve the html file where rendered pages are written to</p>
-     * <p>The default directory is {@code null} and filename is {@code "current.html"}.</p>
+     * <p>The default directory is {@code "webfx-external"} and filename is {@code "current.html"}.</p>
      * <p>Use {@code setTempFileURI()} to modify the default directory and filename </p>
      * @return The {@code java.net.URI} of the html file
      */
-    public static URI getTempFileUri(){
+    public static URI getRenderedPageUri(){
         try {
             Path baseDir = Paths.get(System.getProperty("user.home"));
             if(directoryName != null){
@@ -118,9 +117,9 @@ public class ResourceManager {
 
     /**
      * Returns a writable URI inside a given directory. The file and its directory are saved to the user's home directory
-     * <p>This is the function that is used to create the html file where rendered pages are written to</p>
+     * <p>This is the function that is used to create the html file where rendered pages are written.</p>
      * <p>Leaving a paramter null results in the use of the already existing directory and file names,
-     * where the default {@code directoryName} is "webfx-external" and the default {@code filename} is "current.html" </p> 
+     * where the default {@code directoryName} is {@code "webfx-external"} and the default {@code filename} is {@code "current.html"} </p> 
      * @param directoryName Name of the subdirectory (e.g., "temp", "rendered", etc.)
      * @param filename Name of the file (e.g., "current.html")
      * @return The URI to a file inside the given directory, or null if an error occurs
@@ -144,7 +143,7 @@ public class ResourceManager {
             }
 
             return filePath.toUri();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
@@ -165,10 +164,14 @@ public class ResourceManager {
         else{
             in = clazz.getResourceAsStream("/templates/" + filename + ".html");
         }
+        if(in == null){
+            System.out.println("The file: " + filename + " could not be found");
+            return null;
+        }
         try{
             String content = new String(in.readAllBytes(), StandardCharsets.UTF_8);
             return content;
-        } catch (IOException e){
+        } catch (Exception e){
             e.printStackTrace();
             return null;
         }
@@ -188,10 +191,14 @@ public class ResourceManager {
         else{
             in = clazz.getResourceAsStream("/style/" + filename + ".css");
         }
+        if(in == null){
+            System.out.println("The file: " + filename + " could not be found");
+            return null;
+        }
         try{
             String content = new String(in.readAllBytes(), StandardCharsets.UTF_8);
             return content;
-        } catch (IOException e){
+        } catch (Exception e){
             e.printStackTrace();
             return null;
         }
@@ -207,10 +214,14 @@ public class ResourceManager {
     public static String readResource(String filename){
         InputStream in = null;
         in = clazz.getResourceAsStream(filename);
+        if(in == null){
+            System.out.println("The file: " + filename + " could not be found");
+            return null;
+        }
         try{
             String content = new String(in.readAllBytes(), StandardCharsets.UTF_8);
             return content;
-        } catch (IOException e){
+        } catch (Exception e){
             e.printStackTrace();
             return null;
         }
@@ -227,7 +238,7 @@ public class ResourceManager {
         try{
             Files.writeString(output, data, StandardCharsets.UTF_8);
             return true;
-        } catch (IOException e){
+        } catch (Exception e){
             e.printStackTrace();
             return false;
         }

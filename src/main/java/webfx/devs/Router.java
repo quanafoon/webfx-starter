@@ -39,7 +39,7 @@ public class Router {
         history.push(new HistoryData<>(filename, ""));
         this.packageName = ResourceManager.evaluateClazz().getPackageName();
         this.webView = webView;
-        currURI = ResourceManager.getTempFileUri();
+        currURI = ResourceManager.getRenderedPageUri();
         Reflections reflection = new Reflections(packageName, new MethodAnnotationsScanner());
         this.methods = mapMethods(reflection.getMethodsAnnotatedWith(Endpoint.class));
         if(ResourceManager.getTemplate(filename) == null)
