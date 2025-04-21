@@ -18,6 +18,9 @@ import java.util.LinkedList;
  */
 public class Database {
 
+    
+    private Database(){};
+
     //The connection object that is used for interacting with the database
     private static Connection connection;
 

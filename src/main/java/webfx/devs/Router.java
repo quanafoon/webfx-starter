@@ -15,7 +15,7 @@ import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 
 
-/*
+/**
  * This is the Router class which can be used to navigate between different pages.
  */
 public class Router {
@@ -120,23 +120,32 @@ public class Router {
 
     /**
      * This is serves to be the method that javascript can call for form submission. 
-     * It reads through the input fields of the specified form id and carries the data to the specified endpoint.
+     * <p>It reads through the input fields of the specified form id and carries the data to the specified endpoint. </p>
+     * <p>Endpoints expecting data, must be have a single parameter of type {@code Data} </p>
      * @param id , indication the form id
      * @param endpoint , indicating the annotated endpoint name i.e "@Endpoint(name="")"
      */
     public void submission(String id, String endpoint){
         try{
             if(methods.containsKey(endpoint)){
-                JSObject data = (JSObject) webView.getEngine().executeScript("document.querySelectorAll('#" + id + " input')");
-                int length = (Integer) data.getMember("length");
-                JsonObject json = new JsonObject();
+                JSObject inputs = (JSObject) webView.getEngine().executeScript("document.querySelectorAll('#" + id + " input')");
+                int length = (Integer) inputs.getMember("length");
+                Data data = new Data();
                 for(int i=0; i < length; i++){
-                    JSObject input = (JSObject) data.getSlot(i);
+                    JSObject input = (JSObject) inputs.getSlot(i);
                     String property = (String) input.getMember("id");
-                    String value = (String) input.getMember("value");
-                    json.addProperty(property, value);
+                    data.put(property, input.getMember("value"));
                 }
-                methods.get(endpoint).invoke(null, json);
+                try{
+                    methods.get(endpoint).invoke(null, data);
+                    return;
+                } catch (IllegalArgumentException | NullPointerException e){
+                    if(e instanceof IllegalArgumentException)
+                        System.out.println("Error routing to endpoint: " + endpoint + ", Please ensure that it either has no parameters or it's only parameter is of type: Data");
+                    if(e instanceof NullPointerException)
+                        System.out.println("Error routing to endpoint: " + endpoint + ", Please ensure that the method that " + endpoint + " annotates is static");
+                    return;
+                }
             }
             else{
                 System.out.println(endpoint + " does not exist or is not annotated properly");
@@ -158,6 +167,7 @@ public class Router {
         HashMap<String, Method> map = new HashMap<>();
         try{
             for(Method method : methods){
+                method.setAccessible(true);
                 String name = method.getAnnotation(Endpoint.class).name();
                 if(!map.containsKey(name))
                     map.put(name, method);
@@ -171,24 +181,33 @@ public class Router {
 
     
     /**
-     * Routes to a specific endpoint given the endpoint's name. {@code JsonObject} can also be passed, insert null if no data is being passed
+     * Routes to a specific endpoint given the endpoint's name. Data as a {@code String} can also be passed, insert {@code null} if no data is being passed
      * @param endpoint , indicating the annotated endpoint name i.e "@Endpoint(name="")"
-     * @param data , data being passed, insert {@code null} if no data is meant to be passed
+     * @param jsonString , data being passed, insert {@code null} if no data is meant to be passed
      */
-    public void route(String endpoint, String data){
+    public void route(String endpoint, String jsonString){
         try{
             if(!methods.containsKey(endpoint)){
                 System.out.println(endpoint + " does not exist or is not annotated properly");
             }
             Method method = methods.get(endpoint);
-            if(data == null){
+            if(jsonString == null){
                 method.invoke(null);
                 return;
             }
             else{
-                JsonObject json = JsonParser.parseString(data).getAsJsonObject();
-                method.invoke(null, json);
-                return;
+                JsonObject json = JsonParser.parseString(jsonString).getAsJsonObject();
+                Data data = DataManager.jsonToData(json);
+                try{
+                    method.invoke(null, data);
+                    return;
+                } catch (IllegalArgumentException | NullPointerException e){
+                    if(e instanceof IllegalArgumentException)
+                        System.out.println("Error routing to endpoint: " + endpoint + ", Please ensure that it either has no parameters or it's only parameter is of type: Data");
+                    if(e instanceof NullPointerException)
+                        System.out.println("Error routing to endpoint: " + endpoint + ", Please ensure that the method that " + endpoint + " annotates is static");
+                    return;
+                }
             }
         } catch (Exception e){
             System.out.println("Error during routing");

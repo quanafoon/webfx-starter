@@ -21,7 +21,12 @@ import javafx.stage.Stage;
  */
 public class ResourceManager {
 
-    // The class within a package that contains all resources
+
+    private ResourceManager(){};
+
+    /**
+     * The class within a package that contains all resources
+     */
     public static Class<?> clazz = evaluateClazz();
 
     //The directory and filename for the external Temp File where html content is rendered to
@@ -124,7 +129,7 @@ public class ResourceManager {
      * @param filename Name of the file (e.g., "current.html")
      * @return The URI to a file inside the given directory, or null if an error occurs
      */
-    public static URI setTempFileURI(String directoryName, String filename) {
+    public static URI setRenderedPageUri(String directoryName, String filename) {
         if(directoryName == null) 
             directoryName = ResourceManager.directoryName;
         if(filename == null)
@@ -206,7 +211,7 @@ public class ResourceManager {
 
     /**
      * Reads the contents within a file in the resources directory
-     * <p>If it's not in the root of resources, must specify the path e.g. {@code Path/to/route}
+     * <p>If it's not in the root of resources, must specify the path in resources e.g. {@code /style/style.css}
      * <p>Extension must be included in filename e.g. .html, .css</p>
      * @param filename , The name of the file
      * @return {@code String} of the file's contents
@@ -276,7 +281,7 @@ public class ResourceManager {
 
     /**
      * Sets the name of the external directory
-     * @param directoryName
+     * @param directoryName the name of the directory
      */
     public static void setDirectoryName(String directoryName) {
         ResourceManager.directoryName = directoryName;
@@ -292,6 +297,7 @@ public class ResourceManager {
 
     /**
      * Sets the name of the external file where html content is rendered
+     * @param filename the name of the file
      */
     public static void setFilename(String filename) {
         ResourceManager.filename = filename;

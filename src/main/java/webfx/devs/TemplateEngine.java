@@ -165,7 +165,7 @@ public class TemplateEngine {
     
     /**
      * Set whether or not the engine runs when templates are rendered
-     * @param running
+     * @param running The {@code boolean} attribute that determines if the template engine runs or not
      */
     public static void setRunning(boolean running) {
         TemplateEngine.running = running;
