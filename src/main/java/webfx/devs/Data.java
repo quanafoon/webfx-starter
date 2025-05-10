@@ -1,5 +1,6 @@
 package webfx.devs;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 
@@ -29,7 +30,7 @@ public class Data extends HashMap<String, Object>{
 
     /**
      * Retrieves a value from the Data object and attempts to cast/convert it to the specified type.
-     * This can be used as a safe an alternative to casting the desired type on data. 
+     * This can be used as a safe alternative to casting the desired type on data. 
      * <p>The safest ways of accessing data in a {@code Data} object for types other than string, are through this method and typecasting after ensuring DataManager's {@link DataManager#validateData(Class, Data) validateData()}  is not null.</p>
      * @param <T> the generic type
      * @param key The key in the Data object.
@@ -43,6 +44,25 @@ public class Data extends HashMap<String, Object>{
             Object converted = DataManager.checkDataType(type, value);
             return (T) converted;
         } catch (Exception e) {
+            return null;
+        }
+    }
+
+
+    /**
+     * Accepts a key from the {@code Data} object being used to call this method and returns an {@code ArrayList} if applicable.
+     * <p>The ArrayList will contain type: {@code String} </p>
+     * <p>This method expects the String to be of the form: "[val, val, val]" </p>
+     * @param key The key corresponding the desired data
+     * @return An {@code ArrayList<String>} of the Data's content for the specified key, or {@code null}
+     */
+    public ArrayList<String> getArrayList(String key){
+        try{
+            Object data = this.get(key);
+            String str = data.toString();
+            ArrayList<String> list = DataManager.parseList(str, String.class);
+            return list;
+        }catch(Exception e){
             return null;
         }
     }

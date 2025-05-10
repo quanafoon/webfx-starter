@@ -1,6 +1,10 @@
 package webfx.devs;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.lang.Character;
+
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 
@@ -78,7 +82,62 @@ public class DataManager {
         }
         return validated;
     }
+/**
+     * Accepts a key from the {@code Data} object being used to call this method and returns an {@code ArrayList} if applicable.
+     * <p>The ArrayList will contain type: {@code String} </p>
+     * @param key The key corresponding the desired data
+     * @return An {@code ArrayList<String>} of the Data's content for the specified key, or {@code null}
+     */
 
+    /**
+     * Accepts a {@code String} and a returns an {@code ArrayList} of the String's contents if applicable.
+     * <p>Accepts a {@code Class<T>} and attempts to cast/convert it to the specified type </p>
+     * <p>This method expects the String to be of the form: "[val, val, val]" </p>
+     * @param <T> the generic type
+     * @param data the String to be converted to an ArrayList
+     * @param type the type of the ArrayList
+     * @return An {@code ArrayList} of the specified type if the String can be converted and is of the correct structure, {@code null} otherwise
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> ArrayList<T> parseList(String data, Class<T> type){
+        try{
+            String str = data.toString();
+            Character curr = str.charAt(0);
+            
+            if(!curr.equals('[')){
+                System.out.println("Conversion Error: Data did not start with a '['");
+                return null;
+            }
+            curr = str.charAt(str.length()-1);
+            if(!curr.equals(']')){
+                System.out.println("Conversion Error: Data did not end in ']'");
+                return null;
+            }
+            String word = "";
+            ArrayList<T> list = new ArrayList<>();
+            Object checkedWord;
+            for(int i = 1; i < str.length(); i++){
+                curr = str.charAt(i);
+                if(curr.equals(']')){
+                    checkedWord = checkDataType(type, word);
+                    list.add((T) checkedWord);
+                    break;
+                }
+                if(curr.equals('"'))
+                    continue;
+                if(curr.equals(',')){
+                    checkedWord = checkDataType(type, word);
+                    list.add((T) checkedWord);
+                    word = "";  
+                    continue;
+                }
+                word += curr;
+            }
+            return list;
+        }catch(Exception e){
+            return null;
+        }
+    }
 
     /**
      * Checks the type that a java class expects against the provided {@code Object}

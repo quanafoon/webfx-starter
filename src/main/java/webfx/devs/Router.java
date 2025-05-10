@@ -122,6 +122,7 @@ public class Router {
      * This is serves to be the method that javascript can call for form submission. 
      * <p>It reads through the input fields of the specified form id and carries the data to the specified endpoint. </p>
      * <p>Endpoints expecting data, must be have a single parameter of type {@code Data} </p>
+     * <p>Empty form values will be interpreted as null </p>
      * @param id , indication the form id
      * @param endpoint , indicating the annotated endpoint name i.e "@Endpoint(name="")"
      */
@@ -133,8 +134,11 @@ public class Router {
                 Data data = new Data();
                 for(int i=0; i < length; i++){
                     JSObject input = (JSObject) inputs.getSlot(i);
+                    Object value = input.getMember("value");
                     String property = (String) input.getMember("id");
-                    data.put(property, input.getMember("value"));
+                    if(value.equals(""))
+                        value = null;
+                    data.put(property, value);
                 }
                 try{
                     methods.get(endpoint).invoke(null, data);

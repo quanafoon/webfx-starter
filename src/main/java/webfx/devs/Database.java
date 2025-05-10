@@ -85,7 +85,8 @@ public class Database {
 
     /**
      * Creates a table based on fields in a given class, with the given table name
-     * <p> Fields declared as {@code id} is not permitted as there is an already existing Auto-Incrememented id Primaru Key Field
+     * <p> Fields declared as {@code id} is not permitted as there is an already existing Auto-Incrememented Primary Key Field, id.
+     * <p> It is not recommended to annotate primitive fields with {@code @Nullable}. Only reference types (e.g., Integer, Double, String) should be marked as nullable, since primitives cannot represent null values. </p>  
      * @param table , The name of the table
      * @param clazz , The class that we are mapping the table to
      * @return {@code true} if creation is successful, {@code false} otherwise
@@ -95,9 +96,15 @@ public class Database {
             Field[] fields = clazz.getDeclaredFields();
             StringBuilder columns = new StringBuilder();
             for(Field field : fields){
-                columns.append(field.getName() + " " + mapJavaTypeToSQL(field.getType()) + ",");
+                if(!field.isAnnotationPresent(Ignore.class)){
+                    if(field.isAnnotationPresent(Nullable.class))
+                        columns.append(field.getName() + " " + mapJavaTypeToSQL(field.getType()) + ",");
+                    else
+                        columns.append(field.getName() + " " + mapJavaTypeToSQL(field.getType()) + " NOT NULL,");
+                }
             }
-            columns.deleteCharAt(columns.length()-1);
+            if (columns.length() > 0)
+                columns.deleteCharAt(columns.length()-1);
             String sql = "CREATE TABLE IF NOT EXISTS " + table + " (id INTEGER PRIMARY KEY AUTOINCREMENT, " + columns + ")";
             Statement statement = connection.createStatement();
             statement.execute(sql);
@@ -152,30 +159,42 @@ public class Database {
     
     /**
      * Inserts a new record into the specified table using the fields and values of the given object.
-     * Only non-null fields will be included in the insert query.
-     *
+     * Only the non-null fields with {@code @Nullable} annotation will be included in the insert query.
+     * <p>It is not recommended to annotate primitive fields with {@code @Nullable}. Only reference types (e.g., Integer, Double, String) should be marked as nullable, since primitives cannot represent null values.</p>  
      * @param table , the name of the table
      * @param record , the object containing the data to insert
      * @return {@code true} if insertion is successful, {@code false} otherwise
      */
     public static boolean insert(String table, Object record){
         try{
+            if (record == null) {
+                System.out.println("Insertion error: record is null.");
+                return false;
+            }
             Class<?> clazz = record.getClass();
             Field[] fields = clazz.getDeclaredFields();
             StringBuilder names = new StringBuilder();
             LinkedList<Object> values = new LinkedList<>();
             StringBuilder placeholders = new StringBuilder();
             for (Field field : fields){
-                field.setAccessible(true);
-                Object value = field.get(record);
-                if(value != null){
-                    names.append(field.getName() + ",");
-                    values.add(value);
-                    placeholders.append("?,");
-                }  
+                if(!field.isAnnotationPresent(Ignore.class)){
+                    field.setAccessible(true);
+                    Object value = field.get(record);
+                    if(value == null && !field.isAnnotationPresent(Nullable.class)){
+                        System.out.println("Passing a null value for a non-nullable field: " + field.getName());
+                        return false;
+                    }
+                    if(value != null){
+                        names.append(field.getName() + ",");
+                        values.add(value);
+                        placeholders.append("?,");
+                    }  
+                }
             }
-            placeholders.deleteCharAt(placeholders.length()-1);
-            names.deleteCharAt(names.length()-1);
+            if (placeholders.length() > 0)
+                placeholders.deleteCharAt(placeholders.length()-1);
+            if (names.length() > 0)
+                names.deleteCharAt(names.length()-1);
             
             String sql = "INSERT INTO " + table + " (" + names +  ") VALUES (" + placeholders + ")";
             PreparedStatement statement = connection.prepareStatement(sql);
