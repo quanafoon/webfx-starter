@@ -3,8 +3,8 @@ package webfx.devs;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.lang.Character;
-
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 
@@ -25,9 +25,10 @@ public class DataManager {
 
 
     /**
-     * Converts a {@code JsonObject} to a {@code Data} object.
-     * Each key-value pair in the JSON object is added to the map.
-     *
+     * Converts a {@code JsonObject} to a {@link Data} object.
+     * Each key-value pair in the {@code JsonObject} is added to the map.
+     * <p>Nested objects will be stored as instances of {@code Data}.</p>
+     * <p>Lists will be stored as instances of {@code ArrayList}</p>
      * @param json the {@code JsonObject} to be converted
      * @return a {@code HashMap} containing the JSON key-value pairs, or {@code null} if an exception occurs
      */
@@ -35,11 +36,42 @@ public class DataManager {
         try{
             Data map = new Data();
             for(String key : json.keySet()){
-                map.put(key, json.get(key));
+                JsonElement element = json.get(key);
+                if(element.isJsonPrimitive())
+                    map.put(key, element);
+                else if(element.isJsonObject()){
+                    map.put(key, jsonToData(element.getAsJsonObject()));
+                }
+                else if(element.isJsonArray()){
+                    map.put(key, jsonToArrayList(element.getAsJsonArray()));
+                }
             }
             return map;
         } catch (Exception e){
             e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Converts a {@code JsonArray} to an {@code ArrayList<Object>}.
+     * @param array The {@code JsonArray} to be converted
+     * @return {@code ArrayList<Object>}
+     */
+    private static ArrayList<Object> jsonToArrayList(JsonArray array){
+        try{
+            ArrayList<Object> list = new ArrayList<>();
+            for(int i=0; i < array.size(); i++){
+                JsonElement element = array.get(i);
+                if(element.isJsonPrimitive())
+                    list.add(element);
+                if(element.isJsonObject())
+                    list.add(jsonToData(element.getAsJsonObject()));
+                if(element.isJsonArray())
+                    list.add(jsonToArrayList(element.getAsJsonArray()));
+            }
+            return list;
+        } catch(Exception e){
             return null;
         }
     }
@@ -82,12 +114,6 @@ public class DataManager {
         }
         return validated;
     }
-/**
-     * Accepts a key from the {@code Data} object being used to call this method and returns an {@code ArrayList} if applicable.
-     * <p>The ArrayList will contain type: {@code String} </p>
-     * @param key The key corresponding the desired data
-     * @return An {@code ArrayList<String>} of the Data's content for the specified key, or {@code null}
-     */
 
     /**
      * Accepts a {@code String} and a returns an {@code ArrayList} of the String's contents if applicable.
@@ -138,6 +164,37 @@ public class DataManager {
             return null;
         }
     }
+
+
+    /**
+     * Returns a {@link Data} object from a given {@code Object}.
+     * @param object Object to be casted
+     * @return {@code Data} if casting was successful, {@code null} otherwise
+     */
+    public static Data toData(Object object){
+        try{
+            Data data = (Data) object;
+            return data;
+        } catch (Exception e){
+            return null;
+        }
+    }
+
+    /**
+     * Returns a {@code ArrayList<Object>} object from a given {@code Object}.
+     * @param object Object to be casted
+     * @return {@code ArrayList<Object>} if casting was successful, {@code null} otherwise
+     */
+    @SuppressWarnings("unchecked")
+    public static ArrayList<Object> toList(Object object){
+        try{
+            ArrayList<Object> list = (ArrayList<Object>) object;
+            return list;
+        } catch (Exception e){
+            return null;
+        }
+    }
+
 
     /**
      * Checks the type that a java class expects against the provided {@code Object}
