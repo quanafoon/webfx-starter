@@ -15,7 +15,7 @@ WebFX is ideal for developers who:
 
 ---
 
-## 🧩 Core Technologies
+## Core Technologies
 
 - **JavaFX WebView** – Renders HTML/CSS/JS interfaces.
 - **Gson** – Facilitates JSON serialization and communication.
@@ -23,7 +23,7 @@ WebFX is ideal for developers who:
 
 ---
 
-## 📦 Modules
+## Modules
 
 ### 1. **Router**
 Simulates routing in web apps. Works with annotated methods and handles:
@@ -31,7 +31,7 @@ Simulates routing in web apps. Works with annotated methods and handles:
 - Navigation (`route("home")`, `route_with_data("profile", data)`).
 - Dynamic data binding using `@Endpoint`.
 - JSON form submission handling.
-- Seamless view transitions (like SPAs).
+- Seamless view transitions.
 
 
 ### 2. **ResourceManager**
@@ -42,11 +42,12 @@ Manages static assets like:
 - Works with external files post-packaging using `/resources` structure.
 - It mitigates the need to explicitly write sql, peferring simple java functions.
 
+
 ### 3. **Database**
 Simple SQLite-based ORM-like layer:
 
 - Provides methods like `get()`, `getAll()`, `insert()`, `update()`, `delete()`.
-- Uses `@Table` and `@Column` annotations for binding Java classes to SQL tables.
+- Uses `@Nullable` and `@Ignore` annotations to provide control over database columns.
 - Supports custom `WHERE` clauses and automatic `Data` mapping.
 
 
@@ -65,15 +66,39 @@ getAll("Users", "username = ? AND active = ?", "john", "1");
 ### 4. Template Engine
 
 - Variable injection using ${variableName}.
-- Loop support: <!-- loop list as item -->...<!-- end -->
-- Conditional rendering: <!-- if condition -->...<!-- end -->
 - Can be toggled on/off per template.
 - Does not require additional runtime libraries.
 
 
+## Annotations
+WebFX uses annotations to reduce boilerplate:
+
+- @Endpoint(path = "submit"): Binds Java method to a JS form submission.
+- @Ignore variable: Ignores variable when database table is made from class.
+- @Nullable variable: Allows database column to be nullable.
 
 
+## File Structure
+Projects should adhere to the following file structure to make get the most out of the library, especially the ResourceManager
 
+```
+src/
+└── main/
+    ├── java/
+    │   └── your/package/
+    └── resources/
+        ├── templates/
+        ├── styles/
+        └── images/
+```
+- Certain methods from the ResourceManager like `getTemplate()` and `getStyleSheet()` would look for files within templates and styles folder.
+- Of course the `getResource()` can be used with any structure, but the ResourceManager's get functions ensures that these files being retreived are of the correct type.
+
+
+## Summary
+- WebFX helps developers write Java desktop apps like they’re building web apps—just plug in HTML/CSS/JS, write backend logic in Java, and enjoy fast, native performance with a web-like development workflow.
+
+- Built for developers who love both web and Java.
 
 
 
