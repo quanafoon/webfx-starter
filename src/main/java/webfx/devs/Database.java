@@ -9,7 +9,10 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.regex.PatternSyntaxException;
 
 
 /**
@@ -22,7 +25,7 @@ public class Database {
     private Database(){};
 
     //The connection object that is used for interacting with the database
-    private static Connection connection;
+    private static Connection connection = null;
 
 
      /**
@@ -61,6 +64,10 @@ public class Database {
      * @param tableName , the name of the table to print
      */
     public static void printTable(String tableName) {
+        if(connection == null){
+            System.out.println("Connection is null, use the connect() function or set the connection's value through Database.connection = ...");
+            return;
+        }
         String query = "SELECT * FROM " + tableName;
         try {
             Statement stmt = connection.createStatement();
@@ -87,11 +94,15 @@ public class Database {
      * Creates a table based on fields in a given class, with the given table name
      * <p> Fields declared as {@code id} is not permitted as there is an already existing Auto-Incrememented Primary Key Field, id.
      * <p> It is not recommended to annotate primitive fields with {@code @Nullable}. Only reference types (e.g., Integer, Double, String) should be marked as nullable, since primitives cannot represent null values. </p>  
-     * @param table , The name of the table
+     * @param tableName , The name of the table
      * @param clazz , The class that we are mapping the table to
      * @return {@code true} if creation is successful, {@code false} otherwise
      */
-    public static boolean createTable(String table, Class<?> clazz){
+    public static boolean createTable(String tableName, Class<?> clazz){
+        if(connection == null){
+            System.out.println("Connection is null, use the connect() function or set the connection's value through Database.connection = ...");
+            return false;
+        }
         try{
             Field[] fields = clazz.getDeclaredFields();
             StringBuilder columns = new StringBuilder();
@@ -105,7 +116,7 @@ public class Database {
             }
             if (columns.length() > 0)
                 columns.deleteCharAt(columns.length()-1);
-            String sql = "CREATE TABLE IF NOT EXISTS " + table + " (id INTEGER PRIMARY KEY AUTOINCREMENT, " + columns + ")";
+            String sql = "CREATE TABLE IF NOT EXISTS " + tableName + " (id INTEGER PRIMARY KEY AUTOINCREMENT, " + columns + ")";
             Statement statement = connection.createStatement();
             statement.execute(sql);
             connection.commit();
@@ -124,6 +135,10 @@ public class Database {
      * @return {@code true} if dropped successfully, {@code false} otherwise
      */
     public static boolean dropTable(String table){
+        if(connection == null){
+            System.out.println("Connection is null, use the connect() function or set the connection's value through Database.connection = ...");
+            return false;
+        }
         try{
             String sql = "DROP TABLE IF EXISTS " + table;
             Statement statement = connection.createStatement();
@@ -144,6 +159,10 @@ public class Database {
      * @return {@code true} if deletion is successful, {@code false} otherwise
      */
     public static boolean deleteAll(String table){
+        if(connection == null){
+            System.out.println("Connection is null, use the connect() function or set the connection's value through Database.connection = ...");
+            return false;
+        }
         try{
             String sql = "DELETE FROM " + table;
             Statement statement = connection.createStatement();
@@ -166,6 +185,10 @@ public class Database {
      * @return {@code true} if insertion is successful, {@code false} otherwise
      */
     public static boolean insert(String table, Object record){
+        if(connection == null){
+            System.out.println("Connection is null, use the connect() function or set the connection's value through Database.connection = ...");
+            return false;
+        }
         try{
             if (record == null) {
                 System.out.println("Insertion error: record is null.");
@@ -212,6 +235,138 @@ public class Database {
 
 
     /**
+     * Accepts an id and returns a {@link Data} representing that record in the database
+     * @param table The name of the table
+     * @param id The id of the desired record
+     * @return A {@code Data} object containing the content of the retrieved record
+     */
+    public static Data get(String table, String id) {
+        if(connection == null){
+            System.out.println("Connection is null, use the connect() function or set the connection's value through Database.connection = ...");
+            return null;
+        }
+        if (id == null || id.trim().isEmpty()) {
+            System.out.println("The id: " + id + " is invalid");
+            return null;
+        }
+    
+        String sql = "SELECT * FROM " + table + " WHERE id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, id);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    Data record = new Data();
+                    ResultSetMetaData metaData = resultSet.getMetaData();
+                    for (int i = 1; i <= metaData.getColumnCount(); i++)
+                        record.put(metaData.getColumnName(i), resultSet.getObject(i));
+                    return record;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Database error while retrieving from " + table + ": " + e.getMessage());
+        }
+    
+        return null;
+    }
+
+
+    /**
+     * Retrieves all records from the specified table that match the provided WHERE clause and values.
+     * <p>This method supports dynamic SQL filtering with parameterized inputs to ensure security and flexibility.</p>
+     * <p><b>Example Usage:</b></p>
+     * <pre>{@code
+     * // 1. Retrieve all users with the username "bob"
+     * List<Data> results1 = getAll("User", "username = ?", "bob");
+     *
+     * // 2. Retrieve all orders from a user with ID "42" and status "delivered"
+     * List<Data> results2 = getAll("Orders", "user_id = ? AND status = ?", "42", "delivered");
+     *
+     * // 3. Retrieve all employees with a salary greater than 50000
+     * List<Data> results3 = getAll("Employees", "salary > ?", "50000");
+     * }</pre>    
+     * @param tableName the name of the table to query from
+     * @param whereClause the WHERE clause of the SQL statement (e.g. "username = ? AND age > ?")
+     * @param values the values to substitute into the WHERE clause placeholders
+     * @return {@code List<Data>} object of each record in the returned from the query
+     */
+    public static List<Data> getAll(String tableName, String whereClause, String... values){
+        if(connection == null){
+            System.out.println("Connection is null, use the connect() function or set the connection's value through Database.connection = ...");
+            return null;
+        }
+        if(whereClause == null || whereClause.trim().equals("")){
+            System.err.println("An invalid 'Where Clause' was passed to getAll()");
+            return null;
+        }
+        for(String value : values){
+            if(value == null || value.trim().equals("")){
+                System.err.println("An invalid value was passed to getAll()");
+                return null;
+            }
+        }
+
+        if(whereClause.chars().filter(ch -> ch == '?').count() != values.length){
+            System.err.println("Error in paramters. The number of values does not match the number of '?'");
+            return null;
+        }
+        List<Data> results = new ArrayList<>();
+        String sql = "SELECT * FROM " + tableName + " WHERE " + whereClause;
+        try(PreparedStatement statement = connection.prepareStatement(sql)){
+
+            for(int i=0; i < values.length; i++)
+                statement.setString(i+1, values[i]);
+            
+            ResultSet resultSet = statement.executeQuery();
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            while(resultSet.next()){
+                Data record = new Data();
+                for(int i=1; i <= metaData.getColumnCount(); i++)
+                    record.put(metaData.getColumnName(i), resultSet.getObject(i));
+                results.add(record);
+            }
+
+            return results;
+        }catch(SQLException | PatternSyntaxException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+    /**
+     * Accepts the name of a table and returns all records in that table as {@code List<Data>}
+     * @param tableName the name of the table to query from
+     * @return {@code List<Data>} of all records
+     */
+    public List<Data> getAll(String tableName){
+        if(connection == null){
+            System.out.println("Connection is null, use the connect() function or set the connection's value through Database.connection = ...");
+            return null;
+        }
+        if(tableName == null || tableName.trim().equals("")){
+            System.err.println("Invalid Table name");
+            return null;
+        }
+        List<Data> results = new ArrayList<>();
+        try{
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery( "SELECT * FROM " + tableName);
+            while(resultSet.next()){
+                ResultSetMetaData metaData = resultSet.getMetaData();
+                Data record = new Data();
+                for(int i=1; i <= metaData.getColumnCount(); i++)
+                    record.put(metaData.getColumnName(i), resultSet.getObject(i));
+                results.add(record);
+            }
+            return results;
+        }catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+    /**
      * Maps Java field types to their corresponding SQLite data types.
      *
      * @param type , the Java class type
@@ -232,4 +387,5 @@ public class Database {
             return "BOOLEAN";
         return "TEXT";
     }
+
 }

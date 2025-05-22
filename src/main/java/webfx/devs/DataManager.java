@@ -116,6 +116,34 @@ public class DataManager {
     }
 
     /**
+     * Accepts a {@link Data} object and a returns an {@code ArrayList} of the {@code Data} object's contents if applicable.
+     * <p>Accepts a {@code Class<T>} and attempts to cast/convert it to the specified type </p>
+     * @param <T> the generic type
+     * @param data the object to be converted to an ArrayList
+     * @param type the type of the ArrayList
+     * @return An {@code ArrayList} of the specified type if the {@code Data} object can be converted and is of the correct structure, {@code null} otherwise
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> ArrayList<T> parseList(Object data, Class<T> type){
+        try{
+            ArrayList<Object> list = toList(data);
+            if(list == null){
+                return null;
+            }
+            ArrayList<T> parsed = new ArrayList<>();
+            for(Object item : list){
+                T checked = (T) checkDataType(type, item);
+                if(checked == null)
+                    return null;
+                parsed.add(checked);
+            }
+            return parsed;
+        }catch(Exception e){
+            return null;
+        }
+    }
+
+    /**
      * Accepts a {@code String} and a returns an {@code ArrayList} of the String's contents if applicable.
      * <p>Accepts a {@code Class<T>} and attempts to cast/convert it to the specified type </p>
      * <p>This method expects the String to be of the form: "[val, val, val]" </p>
@@ -127,14 +155,12 @@ public class DataManager {
     @SuppressWarnings("unchecked")
     public static <T> ArrayList<T> parseList(String data, Class<T> type){
         try{
-            String str = data.toString();
-            Character curr = str.charAt(0);
-            
+            Character curr = data.charAt(0);
             if(!curr.equals('[')){
                 System.out.println("Conversion Error: Data did not start with a '['");
                 return null;
             }
-            curr = str.charAt(str.length()-1);
+            curr = data.charAt(data.length()-1);
             if(!curr.equals(']')){
                 System.out.println("Conversion Error: Data did not end in ']'");
                 return null;
@@ -142,17 +168,21 @@ public class DataManager {
             String word = "";
             ArrayList<T> list = new ArrayList<>();
             Object checkedWord;
-            for(int i = 1; i < str.length(); i++){
-                curr = str.charAt(i);
+            for(int i = 1; i < data.length()-1; i++){
+                curr = data.charAt(i);
                 if(curr.equals(']')){
-                    checkedWord = checkDataType(type, word);
+                    checkedWord = checkDataType(type, word.trim());
+                    if(checkedWord == null)
+                        return null;
                     list.add((T) checkedWord);
                     break;
                 }
                 if(curr.equals('"'))
                     continue;
                 if(curr.equals(',')){
-                    checkedWord = checkDataType(type, word);
+                    checkedWord = checkDataType(type, word.trim());
+                    if(checkedWord == null)
+                        return null;
                     list.add((T) checkedWord);
                     word = "";  
                     continue;

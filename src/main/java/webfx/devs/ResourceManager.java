@@ -73,7 +73,7 @@ public class ResourceManager {
 
     /**
      * Retrieves the URI of the given file (as a string) in external form
-     * <p>File structure must be {@code Resources/style/filename}</p>
+     * <p>File structure must be {@code Resources/styles/filename}</p>
      * @param filename , The name of the stylesheet
      * @return {@code String} The filename's resource path (External Form)
      */
@@ -81,10 +81,10 @@ public class ResourceManager {
         java.net.URL URL = null;
         try{
             if(filename.endsWith(".css")){
-                URL = clazz.getResource("/style/" + filename);
+                URL = clazz.getResource("/styles/" + filename);
             }
             else{
-                URL = clazz.getResource("/style/" + filename + ".css");
+                URL = clazz.getResource("/styles/" + filename + ".css");
             }
             if(URL != null){
                 return URL.toExternalForm();
@@ -191,10 +191,10 @@ public class ResourceManager {
     public static String readFromStylesheet(String filename){
         InputStream in = null;
         if(filename.endsWith(".css")){
-            in = clazz.getResourceAsStream("/style/" + filename);
+            in = clazz.getResourceAsStream("/styles/" + filename);
         }
         else{
-            in = clazz.getResourceAsStream("/style/" + filename + ".css");
+            in = clazz.getResourceAsStream("/styles/" + filename + ".css");
         }
         if(in == null){
             System.out.println("The file: " + filename + " could not be found");
@@ -211,7 +211,7 @@ public class ResourceManager {
 
     /**
      * Reads the contents within a file in the resources directory
-     * <p>If it's not in the root of resources, must specify the path in resources e.g. {@code /style/style.css}
+     * <p>If it's not in the root of resources, must specify the path in resources e.g. {@code /styles/style.css}
      * <p>Extension must be included in filename e.g. .html, .css</p>
      * @param filename , The name of the file
      * @return {@code String} of the file's contents
