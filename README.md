@@ -1,10 +1,10 @@
-## WebFX
+# WebFX
 
 WebFX is a lightweight Java library designed to bring the familiar web development experience to desktop development. It uses JavaFX’s `WebView` to simulate a web-based frontend, while enabling developers to write backend logic in Java, bridging the gap between traditional web apps and desktop apps.
+📘 Documentation: [https://quanafoon.github.io/webfx-starter](https://quanafoon.github.io/webfx-starter)
 
 ---
 
-📘 Documentation: [https://quanafoon.github.io/webfx-starter](https://quanafoon.github.io/webfx-starter)
 
 ## Purpose
 
